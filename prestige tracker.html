@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ascension Prestige Tracker</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #101820, #1b2838);
+      color: white;
+      text-align: center;
+      padding: 30px 15px;
+    }
+
+    .card {
+      max-width: 450px;
+      margin: auto;
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+      font-size: 26px;
+      margin-bottom: 10px;
+      color: #f4c542;
+    }
+
+    .bonus {
+      font-size: 34px;
+      font-weight: bold;
+      margin: 25px 0 10px;
+    }
+
+    .time {
+      font-size: 15px;
+      color: #ccc;
+      margin-bottom: 25px;
+    }
+
+    .next {
+      background: rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 10px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .footer {
+      margin-top: 25px;
+      font-size: 12px;
+      color: #aaa;
+    }
+
+    .date {
+      color: white;
+    }
+
+    .openworld {
+      color: #FFB627;
+      text-shadow: 0 0 6px #FFB627;
+    }
+
+    .dungeons {
+      color: #4DA6FF;
+    }
+
+    .battlegrounds {
+      color: #FF4D4D;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+
+    <h1>Ascension Prestige Tracker</h1>
+
+    <p>Active Bonus</p>
+
+    <div class="bonus" id="currentBonus"></div>
+
+    <div class="time" id="timeRemaining"></div>
+
+    <h3>Upcoming Days</h3>
+
+    <div id="futureBonuses"></div>
+
+    <div class="footer">
+      Rotation changes daily at 02:00 Spain Time
+    </div>
+
+  </div>
+
+  <script>
+
+    const bonuses = [
+      "🌍 Open World",
+      "🏰 Dungeons",
+      "⚔️ Battlegrounds"
+    ];
+
+    // 29/05/2026 = Open World
+    const referenceDate = new Date(2026, 4, 29);
+
+    function getGameDate(date) {
+
+      const adjustedDate = new Date(date);
+
+      if (adjustedDate.getHours() < 2) {
+        adjustedDate.setDate(adjustedDate.getDate() - 1);
+      }
+
+      adjustedDate.setHours(0,0,0,0);
+
+      return adjustedDate;
+    }
+
+    function getBonusForDate(date) {
+
+      const gameDate = getGameDate(date);
+
+      const diffTime = gameDate - referenceDate;
+
+      const diffDays =
+        Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      const index =
+        ((diffDays % 3) + 3) % 3;
+
+      return bonuses[index];
+    }
+
+    function getBonusClass(bonus) {
+
+      if (bonus.includes("Open World")) {
+        return "openworld";
+      }
+
+      if (bonus.includes("Dungeons")) {
+        return "dungeons";
+      }
+
+      return "battlegrounds";
+    }
+
+    function updateApp() {
+
+      const now = new Date();
+
+      const currentBonus =
+        getBonusForDate(now);
+
+      const currentClass =
+        getBonusClass(currentBonus);
+
+      document.getElementById("currentBonus").innerHTML =
+        `<span class="${currentClass}">${currentBonus}</span>`;
+
+      const nextChange = new Date(now);
+
+      nextChange.setHours(2,0,0,0);
+
+      if (now >= nextChange) {
+        nextChange.setDate(
+          nextChange.getDate() + 1
+        );
+      }
+
+      const remainingMs =
+        nextChange - now;
+
+      const hours =
+        Math.floor(
+          remainingMs / (1000 * 60 * 60)
+        );
+
+      const minutes =
+        Math.floor(
+          (remainingMs / (1000 * 60)) % 60
+        );
+
+      document.getElementById("timeRemaining").textContent =
+        `Next rotation in ${hours}h ${minutes}m`;
+
+      const futureContainer =
+        document.getElementById("futureBonuses");
+
+      futureContainer.innerHTML = "";
+
+      for (let i = 1; i <= 7; i++) {
+
+        const futureDate = new Date(now);
+
+        futureDate.setDate(
+          futureDate.getDate() + i
+        );
+
+        const readableDate =
+          futureDate.toLocaleDateString(
+            "en-GB",
+            {
+              weekday: "long",
+              day: "numeric",
+              month: "long"
+            }
+          );
+
+        const bonus =
+          getBonusForDate(futureDate);
+
+        const bonusClass =
+          getBonusClass(bonus);
+
+        const div =
+          document.createElement("div");
+
+        div.className = "next";
+
+        div.innerHTML =
+          `<span class="date">${readableDate}:</span> <span class="${bonusClass}">${bonus}</span>`;
+
+        futureContainer.appendChild(div);
+      }
+    }
+
+    updateApp();
+
+    setInterval(updateApp, 60000);
+
+  </script>
+
+</body>
+</html>
